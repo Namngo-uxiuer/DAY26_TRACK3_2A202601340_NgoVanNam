@@ -109,7 +109,7 @@ nộp bài cho phép đính kèm ảnh, nên chụp 3 ảnh tùy chọn:
 ## Link nộp bài
 
 ```text
-https://github.com/Namngo-uxiuer/Day26-MCP-Tools-Integration
+https://github.com/Namngo-uxiuer/DAY26_TRACK3_2A202601340_NgoVanNam
 ```
 
 Không upload `.env`, API key, token hoặc secret thật.
