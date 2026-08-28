@@ -89,4 +89,4 @@ python .\http_client.py
 
 - Không commit `.env`, API key, token hoặc password.
 - Mẫu [`.env.example`](.env.example) chỉ có placeholder, an toàn để commit.
-- Bài này không cần Gemini hay WeatherAPI key. Hai key đó chỉ cần nếu chạy Lab 04 weather agent có sẵn.
+- Bài này không cần Gemini hay weather API key. Lab 04 dùng Open-Meteo miễn phí; chỉ phần ADK chat cần `GOOGLE_API_KEY`.

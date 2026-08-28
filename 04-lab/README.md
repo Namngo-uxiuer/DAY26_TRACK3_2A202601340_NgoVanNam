@@ -6,7 +6,7 @@ A weather agent built with Google ADK that connects to an MCP server via Streama
 
 ```
 ┌─────────────────┐   Streamable HTTP    ┌─────────────────┐      REST       ┌─────────────────┐
-│   ADK Agent     │ ──────────────────── │   MCP Server    │ ─────────────── │  WeatherAPI.com │
+│   ADK Agent     │ ──────────────────── │   MCP Server    │ ─────────────── │  Open-Meteo API │
 │  (mcp-client)   │   localhost:8085/mcp │  (mcp-server)   │                 │                 │
 └─────────────────┘                      └─────────────────┘                 └─────────────────┘
 ```
@@ -56,9 +56,8 @@ So với bài 02 (viết client thủ công bằng `mcp.ClientSession`), ADK gi�
 cd mcp-server
 uv sync
 
-# Create .env from the template and set your WeatherAPI key
+# Open-Meteo is a live public API; no API key is required.
 cp .env.example .env
-# WEATHERAPI_KEY=your_weatherapi_key
 
 # Start the server (runs on port 8085 by default)
 uv run python weather.py
@@ -86,9 +85,11 @@ Open http://localhost:8000 in your browser, select `weather_agent`, and ask abou
 
 | Variable | Where | Description |
 |----------|-------|-------------|
-| `WEATHERAPI_KEY` | mcp-server | API key from weatherapi.com |
 | `GOOGLE_API_KEY` | mcp-client/.env | Gemini API key |
 | `PORT` | mcp-server (env) | Override server port (default: 8085) |
+
+Weather data comes from the live Open-Meteo Forecast and Geocoding APIs, so the
+MCP server does not need a weather API key.
 
 Trên Windows PowerShell, dùng `Copy-Item .env.example .env`, sau đó mở `.env`
 và dán key. Hai file `.env` nằm ở `mcp-server/` và `mcp-client/` tương ứng,

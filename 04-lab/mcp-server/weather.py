@@ -1,43 +1,52 @@
 from typing import Any
-import asyncio
 import httpx
 import os
-from pathlib import Path
-from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
-
-# Load a local .env file if the learner created one. It is ignored by Git.
-load_dotenv(Path(__file__).with_name(".env"))
 
 # Initialize FastMCP server
 port = int(os.getenv("PORT", 8085))
 mcp = FastMCP("weather", host="0.0.0.0", port=port)
 
-# Constants
-WEATHERAPI_BASE = "https://api.weatherapi.com/v1"
+# Open-Meteo is a live public weather API and does not require an API key.
+FORECAST_API = "https://api.open-meteo.com/v1/forecast"
+GEOCODING_API = "https://geocoding-api.open-meteo.com/v1/search"
 USER_AGENT = "weather-app/1.0"
 
-# Get API key from environment variable
-API_KEY = os.getenv("WEATHERAPI_KEY")
+WMO_DESCRIPTIONS = {
+    0: "trời quang",
+    1: "trời quang nhẹ",
+    2: "mây rải rác",
+    3: "nhiều mây",
+    45: "sương mù",
+    48: "sương muối",
+    51: "mưa phùn nhẹ",
+    53: "mưa phùn",
+    55: "mưa phùn dày",
+    61: "mưa nhẹ",
+    63: "mưa vừa",
+    65: "mưa to",
+    71: "tuyết nhẹ",
+    73: "tuyết vừa",
+    75: "tuyết to",
+    80: "mưa rào nhẹ",
+    81: "mưa rào vừa",
+    82: "mưa rào to",
+    95: "dông",
+    96: "dông kèm mưa đá nhẹ",
+    99: "dông kèm mưa đá mạnh",
+}
 
-async def make_weather_request(endpoint: str, params: dict[str, str]) -> dict[str, Any] | None:
-    """Make a request to the WeatherAPI with proper error handling."""
-    # Check if API key is set
-    if not API_KEY:
-        print("ERROR: WeatherAPI key not set. Please set WEATHERAPI_KEY environment variable.")
-        return None
-        
-    headers = {
-        "User-Agent": USER_AGENT,
-    }
-    # Add API key to parameters
-    params["key"] = API_KEY
-    
-    url = f"{WEATHERAPI_BASE}/{endpoint}"
-    
+
+async def make_request(url: str, params: dict[str, Any]) -> dict[str, Any] | None:
+    """Call an Open-Meteo endpoint with consistent error handling."""
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(url, headers=headers, params=params, timeout=30.0)
+            response = await client.get(
+                url,
+                headers={"User-Agent": USER_AGENT},
+                params=params,
+                timeout=30.0,
+            )
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as e:
@@ -50,6 +59,20 @@ async def make_weather_request(endpoint: str, params: dict[str, str]) -> dict[st
             print(f"Unexpected error: {e}")
             return None
 
+
+async def geocode_city(city: str) -> dict[str, Any] | None:
+    """Resolve a city name to coordinates using Open-Meteo Geocoding API."""
+    data = await make_request(
+        GEOCODING_API,
+        {"name": city, "count": 1, "language": "en", "format": "json"},
+    )
+    results = data.get("results", []) if data else []
+    return results[0] if results else None
+
+
+def weather_description(code: int | None) -> str:
+    return WMO_DESCRIPTIONS.get(code or -1, f"mã thời tiết WMO {code}")
+
 @mcp.tool()
 async def get_current_weather(city: str) -> str:
     """Get current weather conditions for a city.
@@ -57,34 +80,41 @@ async def get_current_weather(city: str) -> str:
     Args:
         city: City name (e.g., "Hanoi", "Haiphong", "Danang", "Brisbane", "Sydney")
     """
-    params = {
-        "q": city,
-        "aqi": "no"
-    }
-    
-    data = await make_weather_request("current.json", params)
+    location = await geocode_city(city)
+    if not location:
+        return f"Không tìm thấy thành phố: {city}."
+
+    data = await make_request(
+        FORECAST_API,
+        {
+            "latitude": location["latitude"],
+            "longitude": location["longitude"],
+            "current": (
+                "temperature_2m,relative_humidity_2m,apparent_temperature,"
+                "precipitation,weather_code,wind_speed_10m,wind_direction_10m"
+            ),
+            "timezone": "auto",
+        },
+    )
 
     if not data:
-        if not API_KEY:
-            return f"❌ WeatherAPI key not configured. Please set WEATHERAPI_KEY environment variable with your API key from weatherapi.com"
-        return f"Unable to fetch current weather data for {city}. Please check the city name and API key configuration."
+        return f"Không thể lấy dữ liệu thời tiết cho {city} từ Open-Meteo."
 
     current = data["current"]
-    location = data["location"]
-    
+    current_units = data.get("current_units", {})
     return f"""
-Current Weather for {location['name']}, {location['region']}, {location['country']}:
+Thời tiết hiện tại tại {location['name']}, {location.get('country', '')}:
 
-Temperature: {current['temp_c']}°C ({current['temp_f']}°F)
-Feels like: {current['feelslike_c']}°C ({current['feelslike_f']}°F)
-Condition: {current['condition']['text']}
-Humidity: {current['humidity']}%
-Wind: {current['wind_kph']} km/h ({current['wind_mph']} mph) {current['wind_dir']}
-Pressure: {current['pressure_mb']} mb
-UV Index: {current['uv']}
-Visibility: {current['vis_km']} km
+Nhiệt độ: {current['temperature_2m']} {current_units.get('temperature_2m', '°C')}
+Cảm giác: {current['apparent_temperature']} {current_units.get('apparent_temperature', '°C')}
+Tình trạng: {weather_description(current.get('weather_code'))}
+Độ ẩm: {current['relative_humidity_2m']}%
+Mưa: {current['precipitation']} mm
+Gió: {current['wind_speed_10m']} {current_units.get('wind_speed_10m', 'km/h')}
+Hướng gió: {current['wind_direction_10m']}°
 
-Last updated: {current['last_updated']}
+Thời điểm dữ liệu: {current['time']}
+Nguồn: Open-Meteo
 """
 
 @mcp.tool()
@@ -98,38 +128,42 @@ async def get_forecast(city: str, days: int = 3) -> str:
     # Limit days to 3 for free tier
     days = min(days, 3)
     
-    params = {
-        "q": city,
-        "days": str(days),
-        "aqi": "no",
-        "alerts": "no"
-    }
-    
-    data = await make_weather_request("forecast.json", params)
+    location = await geocode_city(city)
+    if not location:
+        return f"Không tìm thấy thành phố: {city}."
+
+    data = await make_request(
+        FORECAST_API,
+        {
+            "latitude": location["latitude"],
+            "longitude": location["longitude"],
+            "daily": (
+                "temperature_2m_max,temperature_2m_min,weather_code,"
+                "precipitation_probability_max,wind_speed_10m_max"
+            ),
+            "forecast_days": days,
+            "timezone": "auto",
+        },
+    )
 
     if not data:
-        if not API_KEY:
-            return f"❌ WeatherAPI key not configured. Please set WEATHERAPI_KEY environment variable with your API key from weatherapi.com"
-        return f"Unable to fetch forecast data for {city}. Please check the city name and API key configuration."
+        return f"Không thể lấy dự báo thời tiết cho {city} từ Open-Meteo."
 
-    location = data["location"]
-    forecast_days = data["forecast"]["forecastday"]
-    
+    daily = data["daily"]
+
     forecasts = []
-    forecasts.append(f"Weather Forecast for {location['name']}, {location['region']}, {location['country']}:")
-    
-    for day in forecast_days:
-        day_data = day["day"]
-        date = day["date"]
-        
+    forecasts.append(f"Dự báo thời tiết {days} ngày tại {location['name']}, {location.get('country', '')}:")
+
+    for index, date in enumerate(daily["time"]):
+        code = daily["weather_code"][index]
+
         forecast = f"""
 {date}:
-High: {day_data['maxtemp_c']}°C ({day_data['maxtemp_f']}°F)
-Low: {day_data['mintemp_c']}°C ({day_data['mintemp_f']}°F)
-Condition: {day_data['condition']['text']}
-Chance of Rain: {day_data['daily_chance_of_rain']}%
-Max Wind: {day_data['maxwind_kph']} km/h
-UV Index: {day_data['uv']}
+Cao nhất: {daily['temperature_2m_max'][index]}°C
+Thấp nhất: {daily['temperature_2m_min'][index]}°C
+Tình trạng: {weather_description(code)}
+Khả năng mưa: {daily['precipitation_probability_max'][index]}%
+Gió tối đa: {daily['wind_speed_10m_max'][index]} km/h
 """
         forecasts.append(forecast)
 
@@ -138,7 +172,7 @@ UV Index: {day_data['uv']}
 @mcp.tool()
 async def health_check() -> str:
     """Health check endpoint for deployment verification."""
-    return "✅ Weather MCP Server is running! Ready to provide weather data for Australian cities and worldwide."
+    return "✅ Weather MCP Server is running! Using live Open-Meteo data; no API key required."
 
 print("✅ MCP server initialized with Streamable HTTP transport")
 print("🔧 Available tools: get_current_weather, get_forecast, health_check")

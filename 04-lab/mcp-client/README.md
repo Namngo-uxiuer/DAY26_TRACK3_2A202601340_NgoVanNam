@@ -20,7 +20,7 @@ AI agent built with **Google Agent Development Kit (ADK)** that uses tools from 
                                                              │
                                                              ▼
                                                    ┌─────────────────────┐
-                                                   │  WeatherAPI.com     │
+                                                   │  Open-Meteo API      │
                                                    └─────────────────────┘
 ```
 
@@ -40,7 +40,7 @@ AI agent built with **Google Agent Development Kit (ADK)** that uses tools from 
 
 ```bash
 cd ../mcp-server
-export WEATHERAPI_KEY="your_weatherapi_key"
+# Open-Meteo is a live public API; no API key is required.
 uv run python weather.py
 ```
 
@@ -66,6 +66,10 @@ uv sync
 ```bash
 uv run adk web
 ```
+
+To verify the MCP transport without opening the web UI, start the server first
+and run `uv run python test_local_mcp.py`. This discovers the tools and calls
+`health_check` plus live `get_current_weather` for Hanoi.
 
 ### 5. Use the Agent
 
@@ -144,4 +148,4 @@ the key. The agent loads this file automatically at startup.
 - [Google ADK Documentation](https://google.github.io/adk-docs/)
 - [MCP Specification](https://modelcontextprotocol.io/)
 - [FastMCP GitHub](https://github.com/jlowin/fastmcp)
-- [WeatherAPI](https://www.weatherapi.com/)
+- [Open-Meteo](https://open-meteo.com/en/docs)
