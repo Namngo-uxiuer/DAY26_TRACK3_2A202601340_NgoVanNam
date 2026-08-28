@@ -5,6 +5,11 @@ Successfully connects to custom MCP HTTP endpoints!
 from google.adk import Agent
 from google.adk.tools.mcp_tool.mcp_toolset import McpToolset, StreamableHTTPConnectionParams
 import logging
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Keep Google credentials in mcp-client/.env, never in source control.
+load_dotenv(Path(__file__).parents[1] / ".env")
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

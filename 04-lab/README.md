@@ -56,8 +56,9 @@ So với bài 02 (viết client thủ công bằng `mcp.ClientSession`), ADK gi�
 cd mcp-server
 uv sync
 
-# Set your WeatherAPI key (get one free at https://weatherapi.com)
-export WEATHERAPI_KEY="your_weatherapi_key"
+# Create .env from the template and set your WeatherAPI key
+cp .env.example .env
+# WEATHERAPI_KEY=your_weatherapi_key
 
 # Start the server (runs on port 8085 by default)
 uv run python weather.py
@@ -72,7 +73,8 @@ cd mcp-client
 uv sync
 
 # Create .env file with your Gemini API key
-echo "GOOGLE_API_KEY=your_gemini_api_key" > .env
+cp .env.example .env
+# GOOGLE_API_KEY=your_gemini_api_key
 
 # Start ADK web interface
 uv run adk web
@@ -87,3 +89,7 @@ Open http://localhost:8000 in your browser, select `weather_agent`, and ask abou
 | `WEATHERAPI_KEY` | mcp-server | API key from weatherapi.com |
 | `GOOGLE_API_KEY` | mcp-client/.env | Gemini API key |
 | `PORT` | mcp-server (env) | Override server port (default: 8085) |
+
+Trên Windows PowerShell, dùng `Copy-Item .env.example .env`, sau đó mở `.env`
+và dán key. Hai file `.env` nằm ở `mcp-server/` và `mcp-client/` tương ứng,
+đều đã được Git ignore.

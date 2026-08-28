@@ -2,7 +2,12 @@ from typing import Any
 import asyncio
 import httpx
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+
+# Load a local .env file if the learner created one. It is ignored by Git.
+load_dotenv(Path(__file__).with_name(".env"))
 
 # Initialize FastMCP server
 port = int(os.getenv("PORT", 8085))

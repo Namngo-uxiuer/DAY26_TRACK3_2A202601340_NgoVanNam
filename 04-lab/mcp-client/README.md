@@ -51,7 +51,8 @@ cd mcp-client
 
 # Create .env file with your Google API key
 # Get free key from: https://aistudio.google.com/apikey
-echo "GOOGLE_API_KEY=your_google_api_key_here" > .env
+cp .env.example .env
+# GOOGLE_API_KEY=your_google_api_key_here
 ```
 
 ### 3. Install Dependencies
@@ -134,6 +135,9 @@ Create `.env` file:
 ```bash
 GOOGLE_API_KEY=your_gemini_api_key
 ```
+
+On Windows PowerShell: `Copy-Item .env.example .env`, then edit `.env` and add
+the key. The agent loads this file automatically at startup.
 
 ## Resources
 

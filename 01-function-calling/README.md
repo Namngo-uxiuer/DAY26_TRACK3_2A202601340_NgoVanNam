@@ -17,9 +17,16 @@ User hỏi  →  Model quyết định gọi get_weather(city="Hà Nội")
 
 ```bash
 pip install -r ../requirements.txt
-export GEMINI_API_KEY=...
 python weather_function_calling.py
 ```
+
+Trên Windows PowerShell, điền key vào file `01-function-calling/.env`:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+Hoặc tạo từ mẫu: `Copy-Item .env.example .env`. File `.env` không được commit.
 
 ## File
 

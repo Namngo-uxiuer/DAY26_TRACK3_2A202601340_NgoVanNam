@@ -9,9 +9,17 @@ Cách chạy:
     python weather_function_calling.py
 """
 
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+# Load the local .env file when present; secrets remain ignored by Git.
+load_dotenv(Path(__file__).with_name(".env"))
+if not os.environ.get("GEMINI_API_KEY"):
+    raise SystemExit("Set GEMINI_API_KEY in 01-function-calling/.env before running this demo.")
 client = genai.Client()
 
 MODEL = "gemini-2.5-flash"
