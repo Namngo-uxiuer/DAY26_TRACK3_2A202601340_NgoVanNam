@@ -18,13 +18,20 @@ day26-mcp/
 │   ├── weather_server.py
 │   └── weather_client.py
 │
-└── 03-production/           ← Bước 3: Auth, Tool Registry, Versioning
+├── 03-production/           ← Bước 3: Auth, Tool Registry, Versioning
+│   ├── README.md
+│   ├── auth_server.py
+│   ├── auth_client.py
+│   ├── registry.json
+│   ├── registry_client.py
+│   └── versioned_server.py
+│
+└── my-mcp-server/            ← Bài nộp: Workspace Search MCP Server
     ├── README.md
-    ├── auth_server.py
-    ├── auth_client.py
-    ├── registry.json
-    ├── registry_client.py
-    └── versioned_server.py
+    ├── server.py
+    ├── legacy_client.py
+    ├── versioned_client.py
+    └── http_client.py
 ```
 
 ## Quick start
@@ -48,6 +55,28 @@ python auth_client.py              # terminal 2
 # Production — Tool Registry
 cd 03-production && python registry_client.py
 ```
+
+## Bài nộp Day26 — Workspace Search MCP Server
+
+Thư mục [`my-mcp-server/`](my-mcp-server/) là MCP Server hoàn chỉnh cho tác vụ
+tra cứu tài liệu/mã nguồn trong repository: tìm keyword và đọc đoạn file mà
+không phải mở từng file thủ công. Nó đáp ứng cả ba mức của Lab:
+
+- Hai tác vụ thật: `search_workspace`/`search_workspace_v2` và `read_workspace_file`.
+- Chạy local qua `stdio`, đã có hướng dẫn đăng ký với Claude Code.
+- Chạy qua Streamable HTTP với bearer token, có script test thiếu token/token sai/token đúng.
+- Giữ `search_workspace` v1 cho client cũ, thêm `search_workspace_v2` và resource `server://info` cho client mới.
+
+Chạy các kiểm thử offline (không cần API key):
+
+```powershell
+cd my-mcp-server
+python legacy_client.py
+python versioned_client.py
+```
+
+Hướng dẫn đầy đủ, bao gồm Claude Code và HTTP authentication: xem
+[`my-mcp-server/README.md`](my-mcp-server/README.md).
 
 ---
 
